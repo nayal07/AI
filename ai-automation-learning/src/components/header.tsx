@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/contexts/auth-context';
 import { 
   BookOpen, 
   Menu, 
@@ -11,14 +13,19 @@ import {
   Sun, 
   Moon, 
   User,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { user, userProfile, logout } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -116,14 +123,77 @@ const Header = () => {
               )}
             </button>
 
-            {/* Login Button (Desktop) */}
-            <Link
-              href="/login"
-              className="hidden md:flex items-center space-x-2 btn-primary"
-            >
-              <User className="h-4 w-4" />
-              <span>Login</span>
-            </Link>
+            {/* User Menu or Login Button */}
+            {user ? (
+              <div 
+                className="relative"
+                onMouseEnter={() => setIsUserMenuOpen(true)}
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+              >
+                <button className="hidden md:flex items-center space-x-2 p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                  {user.photoURL ? (
+                    <div className="relative w-8 h-8">
+                      <Image
+                        src={user.photoURL}
+                        alt={user.displayName || 'User'}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                  <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                    {userProfile?.displayName || user.displayName || 'User'}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-neutral-500" />
+                </button>
+
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-2"
+                    >
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden md:flex items-center space-x-2 btn-primary"
+              >
+                <User className="h-4 w-4" />
+                <span>Login</span>
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -161,13 +231,34 @@ const Header = () => {
                     {item.name}
                   </Link>
                 ))}
-                <Link
-                  href="/login"
-                  className="px-2 py-3 mt-4 btn-primary text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login
-                </Link>
+                {user ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="px-2 py-3 text-neutral-700 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-accent-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-all duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="px-2 py-3 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="px-2 py-3 mt-4 btn-primary text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
               </nav>
             </motion.div>
           )}
